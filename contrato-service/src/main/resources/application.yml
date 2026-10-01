@@ -16,6 +16,9 @@ spring:
         format_sql: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  mvc:
+    problemdetails:
+      enabled: true
 management:
   endpoints:
     web:
