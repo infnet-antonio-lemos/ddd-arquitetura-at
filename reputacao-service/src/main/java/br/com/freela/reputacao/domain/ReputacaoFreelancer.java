@@ -3,11 +3,14 @@ package br.com.freela.reputacao.domain;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "reputacoes")
 public class ReputacaoFreelancer {
+    private static final Set<String> EVENTOS_COM_IMPACTO = Set.of("ContratoCriado", "ContratoConcluido", "ContratoCancelado");
+
     @Id private UUID freelancerId;
     @Column(nullable=false) private int contratosRecebidos;
     @Column(nullable=false) private int contratosConcluidos;
@@ -25,8 +28,11 @@ public class ReputacaoFreelancer {
         return reputacao;
     }
 
-    /** Aplica o efeito do evento; devolve false quando o evento não afeta a reputação. */
-    public boolean aplicar(EventoDeContrato evento) {
+    public static boolean afetadaPor(EventoDeContrato evento) {
+        return EVENTOS_COM_IMPACTO.contains(evento.eventType());
+    }
+
+    public void aplicar(EventoDeContrato evento) {
         switch (evento.eventType()) {
             case "ContratoCriado" -> contratosRecebidos++;
             case "ContratoConcluido" -> {
@@ -34,12 +40,9 @@ public class ReputacaoFreelancer {
                 valorTotalConcluido = valorTotalConcluido.add(evento.valor());
             }
             case "ContratoCancelado" -> contratosCancelados++;
-            default -> {
-                return false;
-            }
+            default -> throw new IllegalArgumentException("Evento sem impacto na reputação: " + evento.eventType());
         }
         atualizadoEm = Instant.now();
-        return true;
     }
 
     public UUID getFreelancerId(){return freelancerId;} public int getContratosRecebidos(){return contratosRecebidos;}

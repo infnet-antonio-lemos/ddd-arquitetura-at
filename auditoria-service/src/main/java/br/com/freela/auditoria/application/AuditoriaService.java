@@ -25,21 +25,21 @@ public class AuditoriaService {
 
     @Transactional(readOnly = true)
     public List<EventoAuditoria> listar() {
-        return repository.findAllByOrderByRecebidoEmAsc();
+        return repository.findAllByOrderBySequenciaAsc();
     }
 
     @Transactional(readOnly = true)
     public List<EventoAuditoria> porContrato(UUID contratoId) {
-        return repository.findByContratoIdOrderByParticaoAscKafkaOffsetAsc(contratoId);
+        return repository.findByContratoIdOrderBySequenciaAsc(contratoId);
     }
 
     @Transactional(readOnly = true)
     public List<EventoAuditoria> porCorrelacao(String correlationId) {
-        return repository.findByCorrelationIdOrderByRecebidoEmAsc(correlationId);
+        return repository.findByCorrelationIdOrderBySequenciaAsc(correlationId);
     }
 
     @Transactional(readOnly = true)
     public Optional<EventoAuditoria> porEvento(UUID eventId) {
-        return repository.findFirstByEventIdOrderByRecebidoEmAsc(eventId);
+        return repository.findByEventId(eventId);
     }
 }

@@ -24,10 +24,12 @@ public class ContratoEventosListener {
             Correlacao.MDC_CONTRATO_ID, Correlacao.MDC_EVENT_ID, Correlacao.MDC_EVENT_TYPE);
 
     private final AuditoriaService service;
+    private final ReceptorIdempotente receptor;
     private final JsonMapper json;
 
-    public ContratoEventosListener(AuditoriaService service, JsonMapper json) {
+    public ContratoEventosListener(AuditoriaService service, ReceptorIdempotente receptor, JsonMapper json) {
         this.service = service;
+        this.receptor = receptor;
         this.json = json;
     }
 
@@ -44,9 +46,14 @@ public class ContratoEventosListener {
             var evento = ler(registro);
             log.info("auditoria.evento.recebido eventType={} particao={} offset={}",
                     evento.eventType(), registro.partition(), registro.offset());
-            var auditado = service.registrar(evento);
-            log.info("auditoria.evento.processado eventType={} auditoriaId={} durationMs={}",
-                    evento.eventType(), auditado.getId(), duracaoMs(inicio));
+            var auditado = receptor.processarUmaVez(evento.eventId(), evento.eventType(), evento.contratoId(),
+                    () -> service.registrar(evento));
+            if (auditado.isPresent()) {
+                log.info("auditoria.evento.processado eventType={} auditoriaId={} durationMs={}",
+                        evento.eventType(), auditado.get().getId(), duracaoMs(inicio));
+            } else {
+                log.info("auditoria.evento.duplicado eventType={} durationMs={}", evento.eventType(), duracaoMs(inicio));
+            }
         } catch (RuntimeException ex) {
             log.warn("auditoria.evento.falha particao={} offset={} durationMs={} erro={}",
                     registro.partition(), registro.offset(), duracaoMs(inicio), ex.toString());

@@ -23,14 +23,14 @@ public class ReputacaoService {
 
     @Transactional
     public boolean processar(EventoDeContrato evento) {
-        var reputacao = repository.findById(evento.freelancerId())
-                .orElseGet(() -> ReputacaoFreelancer.nova(evento.freelancerId()));
-        if (!reputacao.aplicar(evento)) {
+        if (!ReputacaoFreelancer.afetadaPor(evento)) {
             log.info("reputacao.evento.ignorado eventType={} freelancerId={} motivo=sem-impacto-na-reputacao",
                     evento.eventType(), evento.freelancerId());
             return false;
         }
-        repository.save(reputacao);
+        repository.garantirExistencia(evento.freelancerId());
+        var reputacao = repository.buscarParaAtualizar(evento.freelancerId());
+        reputacao.aplicar(evento);
         log.info("reputacao.atualizada eventType={} freelancerId={} contratosRecebidos={} contratosConcluidos={} contratosCancelados={}",
                 evento.eventType(), reputacao.getFreelancerId(), reputacao.getContratosRecebidos(),
                 reputacao.getContratosConcluidos(), reputacao.getContratosCancelados());

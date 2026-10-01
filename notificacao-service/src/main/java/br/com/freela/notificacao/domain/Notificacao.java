@@ -5,9 +5,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notificacoes", indexes = {
-        @Index(name = "idx_notificacoes_contrato", columnList = "contratoId"),
-        @Index(name = "idx_notificacoes_destinatario", columnList = "destinatarioId")})
+@Table(name = "notificacoes",
+        uniqueConstraints = @UniqueConstraint(name = "uk_notificacoes_evento_destinatario", columnNames = {"eventId", "destinatarioId"}),
+        indexes = {
+                @Index(name = "idx_notificacoes_contrato", columnList = "contratoId"),
+                @Index(name = "idx_notificacoes_destinatario", columnList = "destinatarioId")})
 public class Notificacao {
     @Id private UUID id;
     @Column(nullable=false) private UUID eventId;

@@ -7,8 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EventoAuditoriaRepository extends JpaRepository<EventoAuditoria, UUID> {
-    List<EventoAuditoria> findAllByOrderByRecebidoEmAsc();
-    List<EventoAuditoria> findByContratoIdOrderByParticaoAscKafkaOffsetAsc(UUID contratoId);
-    List<EventoAuditoria> findByCorrelationIdOrderByRecebidoEmAsc(String correlationId);
-    Optional<EventoAuditoria> findFirstByEventIdOrderByRecebidoEmAsc(UUID eventId);
+    List<EventoAuditoria> findAllByOrderBySequenciaAsc();
+    List<EventoAuditoria> findByContratoIdOrderBySequenciaAsc(UUID contratoId);
+    List<EventoAuditoria> findByCorrelationIdOrderBySequenciaAsc(String correlationId);
+    Optional<EventoAuditoria> findByEventId(UUID eventId);
 }

@@ -1,16 +1,20 @@
 package br.com.freela.auditoria.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "auditoria_eventos", indexes = {
-        @Index(name = "idx_auditoria_event_id", columnList = "eventId"),
-        @Index(name = "idx_auditoria_contrato", columnList = "contratoId"),
-        @Index(name = "idx_auditoria_correlation", columnList = "correlationId")})
+@Table(name = "auditoria_eventos",
+        uniqueConstraints = @UniqueConstraint(name = "uk_auditoria_event_id", columnNames = "eventId"),
+        indexes = {
+                @Index(name = "idx_auditoria_contrato", columnList = "contratoId"),
+                @Index(name = "idx_auditoria_correlation", columnList = "correlationId")})
 public class EventoAuditoria {
     @Id private UUID id;
+    @Generated @Column(insertable=false, updatable=false, columnDefinition="bigint generated always as identity") private Long sequencia;
     @Column(nullable=false) private UUID eventId;
     @Column(nullable=false, length=80) private String eventType;
     private Integer eventVersion;
@@ -44,7 +48,7 @@ public class EventoAuditoria {
         return registro;
     }
 
-    public UUID getId(){return id;} public UUID getEventId(){return eventId;} public String getEventType(){return eventType;}
+    public UUID getId(){return id;} public Long getSequencia(){return sequencia;} public UUID getEventId(){return eventId;} public String getEventType(){return eventType;}
     public Integer getEventVersion(){return eventVersion;} public Instant getOccurredAt(){return occurredAt;}
     public UUID getContratoId(){return contratoId;} public String getCorrelationId(){return correlationId;}
     public String getProducer(){return producer;} public String getConteudo(){return conteudo;} public String getTopico(){return topico;}

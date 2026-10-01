@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReputacaoFreelancerTest {
     private final UUID freelancer = UUID.randomUUID();
@@ -21,10 +22,10 @@ class ReputacaoFreelancerTest {
 
     @Test
     void contaContratosRecebidosConcluidosECancelados() {
-        assertThat(reputacao.aplicar(evento("ContratoCriado", "800.00"))).isTrue();
-        assertThat(reputacao.aplicar(evento("ContratoCriado", "1200.00"))).isTrue();
-        assertThat(reputacao.aplicar(evento("ContratoConcluido", "800.00"))).isTrue();
-        assertThat(reputacao.aplicar(evento("ContratoCancelado", "1200.00"))).isTrue();
+        reputacao.aplicar(evento("ContratoCriado", "800.00"));
+        reputacao.aplicar(evento("ContratoCriado", "1200.00"));
+        reputacao.aplicar(evento("ContratoConcluido", "800.00"));
+        reputacao.aplicar(evento("ContratoCancelado", "1200.00"));
 
         assertThat(reputacao.getContratosRecebidos()).isEqualTo(2);
         assertThat(reputacao.getContratosConcluidos()).isEqualTo(1);
@@ -33,14 +34,19 @@ class ReputacaoFreelancerTest {
     }
 
     @Test
-    void entregaRegistradaEEventosDesconhecidosNaoAlteramAReputacao() {
-        var atualizadoEm = reputacao.getAtualizadoEm();
+    void somenteCriacaoConclusaoECancelamentoAfetamAReputacao() {
+        assertThat(ReputacaoFreelancer.afetadaPor(evento("ContratoCriado", "1"))).isTrue();
+        assertThat(ReputacaoFreelancer.afetadaPor(evento("ContratoConcluido", "1"))).isTrue();
+        assertThat(ReputacaoFreelancer.afetadaPor(evento("ContratoCancelado", "1"))).isTrue();
+        assertThat(ReputacaoFreelancer.afetadaPor(evento("EntregaRegistrada", "1"))).isFalse();
+        assertThat(ReputacaoFreelancer.afetadaPor(evento("ContratoReaberto", "1"))).isFalse();
+    }
 
-        assertThat(reputacao.aplicar(evento("EntregaRegistrada", "800.00"))).isFalse();
-        assertThat(reputacao.aplicar(evento("ContratoReaberto", "800.00"))).isFalse();
-
+    @Test
+    void eventoSemImpactoNaoPodeSerAplicado() {
+        assertThatThrownBy(() -> reputacao.aplicar(evento("EntregaRegistrada", "800.00")))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThat(reputacao.getContratosRecebidos() + reputacao.getContratosConcluidos() + reputacao.getContratosCancelados()).isZero();
-        assertThat(reputacao.getAtualizadoEm()).isEqualTo(atualizadoEm);
     }
 
     private EventoDeContrato evento(String tipo, String valor) {
