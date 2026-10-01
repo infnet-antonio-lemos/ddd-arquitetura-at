@@ -1,5 +1,6 @@
 package br.com.freela.contrato.application;
 
+import br.com.freela.contrato.application.port.PublicadorDeEventos;
 import br.com.freela.contrato.domain.model.ClienteId;
 import br.com.freela.contrato.domain.model.Contrato;
 import br.com.freela.contrato.domain.model.ContratoId;
@@ -7,7 +8,6 @@ import br.com.freela.contrato.domain.model.Dinheiro;
 import br.com.freela.contrato.domain.model.FreelancerId;
 import br.com.freela.contrato.domain.model.Titulo;
 import br.com.freela.contrato.domain.repository.ContratoRepository;
-import br.com.freela.contrato.domain.shared.DomainEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,8 +21,12 @@ import java.util.function.Consumer;
 public class ContratoApplicationService {
     private static final Logger log = LoggerFactory.getLogger(ContratoApplicationService.class);
     private final ContratoRepository repository;
+    private final PublicadorDeEventos publicador;
 
-    public ContratoApplicationService(ContratoRepository repository) { this.repository = repository; }
+    public ContratoApplicationService(ContratoRepository repository, PublicadorDeEventos publicador) {
+        this.repository = repository;
+        this.publicador = publicador;
+    }
 
     @Transactional
     public Contrato criar(CriarContratoCommand cmd) {
@@ -32,7 +36,7 @@ public class ContratoApplicationService {
         log.info("contrato.dominio.criado contratoId={} status={} domainEvents={}",
                 contrato.id(), contrato.status(), contrato.domainEvents().size());
         Contrato salvo = repository.salvar(contrato);
-        registrarEventos(contrato);
+        publicador.publicar(contrato.pullDomainEvents());
         log.info("contrato.criacao.sucesso contratoId={} clienteId={} freelancerId={} status={}",
                 salvo.id(), salvo.clienteId(), salvo.freelancerId(), salvo.status());
         return salvo;
@@ -69,23 +73,12 @@ public class ContratoApplicationService {
         var statusAnterior = contrato.status();
         transicao.accept(contrato);
         var salvo = repository.salvar(contrato);
-        // os eventos são puxados da instância alterada (a devolvida por salvar é reconstruída sem eventos)
-        registrarEventos(contrato);
+        publicador.publicar(contrato.pullDomainEvents());
         log.info("contrato.{}.sucesso contratoId={} statusAnterior={} status={}", operacao, id, statusAnterior, salvo.status());
         return salvo;
     }
 
     private Contrato carregar(UUID id) {
         return repository.buscarPorId(new ContratoId(id)).orElseThrow(() -> new ContratoNaoEncontradoException(id));
-    }
-
-    private void registrarEventos(Contrato contrato) {
-        // PONTO DO ASSESSMENT:
-        // Os eventos existem no Aggregate, mas ainda NÃO são publicados no Kafka.
-        // A publicação transacional (Outbox) é implementada na próxima etapa.
-        for (DomainEvent event : contrato.pullDomainEvents()) {
-            log.info("contrato.evento.pendente contratoId={} eventId={} eventType={} occurredAt={}",
-                    contrato.id(), event.eventId(), event.eventType(), event.occurredAt());
-        }
     }
 }

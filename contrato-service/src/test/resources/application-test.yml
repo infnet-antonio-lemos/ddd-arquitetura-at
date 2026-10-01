@@ -5,3 +5,7 @@ spring:
   cloud:
     discovery:
       enabled: false
+freela:
+  outbox:
+    relay:
+      habilitado: false
