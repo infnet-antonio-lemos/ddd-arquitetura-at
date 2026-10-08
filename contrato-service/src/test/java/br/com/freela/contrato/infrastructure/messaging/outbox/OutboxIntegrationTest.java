@@ -7,6 +7,7 @@ import br.com.freela.contrato.domain.repository.ContratoRepository;
 import br.com.freela.contrato.domain.model.ContratoId;
 import br.com.freela.contrato.infrastructure.observabilidade.Correlacao;
 import br.com.freela.contrato.support.IntegrationTest;
+import io.micrometer.tracing.Tracer;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -45,6 +46,7 @@ class OutboxIntegrationTest {
     @Autowired TransactionTemplate transacao;
     @Autowired KafkaContainer kafka;
     @Autowired JsonMapper json;
+    @Autowired Tracer tracer;
     @Value("${freela.kafka.topico-contratos}") String topico;
 
     private CriarContratoCommand novoComando() {
@@ -125,6 +127,22 @@ class OutboxIntegrationTest {
             var descricao = admin.describeTopics(List.of(topico)).allTopicNames().get().get(topico);
             assertThat(descricao.partitions()).hasSize(3);
         }
+    }
+
+    @Test
+    void mensagemPublicadaPeloRelayContinuaOTraceDaOperacao() {
+        var span = tracer.nextSpan().name("requisicao-de-teste").start();
+        UUID id;
+        try (var escopo = tracer.withSpan(span)) {
+            id = service.criar(novoComando()).id().valor();
+        } finally {
+            span.end();
+        }
+
+        relay.publicarPendentes();
+
+        assertThat(consumirDoContrato(id.toString(), 1)).singleElement()
+                .satisfies(r -> assertThat(header(r, "traceparent")).contains(span.context().traceId()));
     }
 
     private List<ConsumerRecord<String, String>> consumirDoContrato(String chave, int esperado) {

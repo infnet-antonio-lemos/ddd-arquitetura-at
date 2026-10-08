@@ -14,4 +14,10 @@ public class KafkaTopicosConfig {
                              @Value("${freela.kafka.particoes:3}") int particoes) {
         return TopicBuilder.name(nome).partitions(particoes).replicas(1).build();
     }
+
+    @Bean
+    NewTopic topicoDlt(@Value("${freela.kafka.topico-dlt}") String nome,
+                       @Value("${freela.kafka.particoes:3}") int particoes) {
+        return TopicBuilder.name(nome).partitions(particoes).replicas(1).build();
+    }
 }

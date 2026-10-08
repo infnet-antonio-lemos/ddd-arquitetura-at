@@ -5,3 +5,8 @@ spring:
   cloud:
     discovery:
       enabled: false
+management:
+  tracing:
+    export:
+      zipkin:
+        enabled: false

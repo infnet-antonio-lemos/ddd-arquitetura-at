@@ -94,6 +94,7 @@ public class OutboxRelayService {
         header(record, "eventType", evento.getEventType());
         header(record, "contratoId", evento.getAggregateId().toString());
         header(record, "correlationId", evento.getCorrelationId());
+        if (evento.getTraceparent() != null) header(record, "traceparent", evento.getTraceparent());
         return record;
     }
 

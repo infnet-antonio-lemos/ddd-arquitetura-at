@@ -5,9 +5,13 @@ import br.com.freela.notificacao.domain.Notificacao;
 import br.com.freela.notificacao.domain.Papel;
 import br.com.freela.notificacao.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -17,6 +21,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
 @IntegrationTest
+@ExtendWith(OutputCaptureExtension.class)
 class ContratoEventosListenerIntegrationTest {
     private static final Duration ESPERA = Duration.ofSeconds(30);
 
@@ -64,6 +69,18 @@ class ContratoEventosListenerIntegrationTest {
 
         await().atMost(ESPERA).untilAsserted(() -> assertThat(service.porContrato(contratoId))
                 .extracting(Notificacao::getTipoEvento).containsOnly("ContratoCriado").hasSize(2));
+    }
+
+    @Test
+    void processamentoContinuaOTraceRecebidoNoHeaderDaMensagem(CapturedOutput saida) {
+        var traceId = UUID.randomUUID().toString().replace("-", "");
+        var registro = evento("ContratoCriado", contratoId, cliente, freelancer);
+        registro.headers().add("traceparent", ("00-" + traceId + "-00f067aa0ba902b7-01").getBytes(StandardCharsets.UTF_8));
+
+        kafka.send(registro);
+
+        await().atMost(ESPERA).untilAsserted(() -> assertThat(saida)
+                .containsPattern("traceId=" + traceId + " .*notificacao\\.evento\\.processado"));
     }
 
     @Test

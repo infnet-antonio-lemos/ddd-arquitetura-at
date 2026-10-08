@@ -9,3 +9,8 @@ freela:
   outbox:
     relay:
       habilitado: false
+management:
+  tracing:
+    export:
+      zipkin:
+        enabled: false

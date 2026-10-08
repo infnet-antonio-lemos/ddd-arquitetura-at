@@ -104,7 +104,7 @@ class OutboxRelayServiceTest {
     private static OutboxEventoJpaEntity evento(String tipo) {
         var contratoId = UUID.randomUUID();
         return new OutboxEventoJpaEntity(UUID.randomUUID(), contratoId, tipo, "freela.contrato.eventos.v1",
-                contratoId.toString(), "{}", "teste-relay");
+                contratoId.toString(), "{}", "teste-relay", null);
     }
 
     private static CompletableFuture<SendResult<String, String>> sucesso(ProducerRecord<String, String> record) {

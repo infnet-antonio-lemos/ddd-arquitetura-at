@@ -59,6 +59,34 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
     networks: [freela-net]
 
+  zipkin:
+    image: openzipkin/zipkin:3.6.1
+    container_name: freela-zipkin
+    ports:
+      - "9411:9411"
+    networks: [freela-net]
+
+  loki:
+    image: grafana/loki:3.7.8
+    container_name: freela-loki
+    ports:
+      - "3100:3100"
+    networks: [freela-net]
+
+  grafana:
+    image: grafana/grafana:12.4.12
+    container_name: freela-grafana
+    depends_on: [loki]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [freela-net]
+
 volumes:
   postgres_data:
 

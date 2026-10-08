@@ -17,6 +17,7 @@ public class OutboxEventoJpaEntity {
     @Column(nullable=false, length=100) private String chave;
     @Column(nullable=false, columnDefinition="text") private String payload;
     @Column(nullable=false, length=100) private String correlationId;
+    @Column(length=100) private String traceparent;
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20) private StatusOutbox status;
     @Column(nullable=false) private int tentativas;
     @Column(length=TAMANHO_MAXIMO_ERRO) private String ultimoErro;
@@ -26,9 +27,9 @@ public class OutboxEventoJpaEntity {
     protected OutboxEventoJpaEntity() {}
 
     public OutboxEventoJpaEntity(UUID eventId, UUID aggregateId, String eventType, String topico, String chave,
-                                 String payload, String correlationId) {
+                                 String payload, String correlationId, String traceparent) {
         this.eventId = eventId; this.aggregateId = aggregateId; this.eventType = eventType; this.topico = topico;
-        this.chave = chave; this.payload = payload; this.correlationId = correlationId;
+        this.chave = chave; this.payload = payload; this.correlationId = correlationId; this.traceparent = traceparent;
         this.status = StatusOutbox.PENDENTE; this.criadoEm = Instant.now();
     }
 
@@ -46,7 +47,7 @@ public class OutboxEventoJpaEntity {
 
     public Long getId(){return id;} public UUID getEventId(){return eventId;} public UUID getAggregateId(){return aggregateId;}
     public String getEventType(){return eventType;} public String getTopico(){return topico;} public String getChave(){return chave;}
-    public String getPayload(){return payload;} public String getCorrelationId(){return correlationId;} public StatusOutbox getStatus(){return status;}
+    public String getPayload(){return payload;} public String getCorrelationId(){return correlationId;} public String getTraceparent(){return traceparent;} public StatusOutbox getStatus(){return status;}
     public int getTentativas(){return tentativas;} public String getUltimoErro(){return ultimoErro;}
     public Instant getCriadoEm(){return criadoEm;} public Instant getPublicadoEm(){return publicadoEm;}
 }

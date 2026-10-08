@@ -23,6 +23,7 @@ spring:
     listener:
       ack-mode: record
       concurrency: ${freela.kafka.particoes}
+      observation-enabled: true
   mvc:
     problemdetails:
       enabled: true
@@ -34,17 +35,27 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      zipkin:
+        endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
 freela:
   kafka:
     topico-contratos: ${TOPICO_CONTRATOS:freela.contrato.eventos.v1}
+    topico-dlt: ${freela.kafka.topico-contratos}.${spring.application.name}.dlt
     particoes: 3
+    falhas:
+      retentativas: 3
+      intervalo-ms: 1000
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} correlationId=%X{correlationId:-} contratoId=%X{contratoId:-} eventId=%X{eventId:-} thread=%thread logger=%logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} correlationId=%X{correlationId:-} contratoId=%X{contratoId:-} eventId=%X{eventId:-} traceId=%X{traceId:-} thread=%thread logger=%logger{36} - %msg%n"
   level:
     root: INFO
     br.com.freela: INFO
